@@ -18,7 +18,7 @@ function get_consumers_table($full_dom, $price_zone) {
     }
 
     $first_index_of_consumers_table = 1;
-    $last_index_of_consumers_table = 25;
+    $last_index_of_consumers_table = 24; //Don't need 'Итого' row
     for ($i = $first_index_of_consumers_table; $i <= $last_index_of_consumers_table; $i++) {
         array_push($table_output, $table_array_tmp[$i]);
     }
@@ -38,7 +38,7 @@ function get_suppliers_table($full_dom, $price_zone) {
     }
 
     $first_index_of_suppliers_table = 27;
-    $last_index_of_suppliers_table = 51;
+    $last_index_of_suppliers_table = 50; //Don't need 'Итого' row
     for ($i = $first_index_of_suppliers_table; $i <= $last_index_of_suppliers_table; $i++) {
         array_push($table_output, $table_array_tmp[$i]);
     }
@@ -64,43 +64,92 @@ function get_needed_columns_from_table_numbers($needed_columns, $table) {
 function get_title_row($number_of_needed_columns) {
     global $columns_separator;
     global $rows_separator;
-    $row = 'Date\\Hours';
-    $row .= $columns_separator;
-    for ($i = 0; $i < $number_of_needed_columns; $i++) {
-        for ($j = 0; $j <= 23; $j++) {
-            $row .= $j;
-            $row .= $columns_separator;
-        }
-        $row .= 'Total per day';
-        if ($i == $number_of_needed_columns - 1) {
-            $row .= $rows_separator;//last element, move to new row
-        } else {
-            $row .= $columns_separator;
-        }
-    }
+    $row =
+        'Day t' . $columns_separator .
+        'Hour i' . $columns_separator .
+        'Price' . $columns_separator .
+        'Peak (08:00-22:00)' . $columns_separator .
+        'Weekend (Sat, Sun)' . $columns_separator .
+        'Winter' . $columns_separator .
+        'Spring' . $columns_separator .
+        'Summer' . $columns_separator .
+        'Standard deviation for hour i, yearly' . $columns_separator .
+        'Standard deviation for hour i, weekly' . $columns_separator .
+        'Yearly mean' . $columns_separator .
+        'Yearly mean for hour i' . $columns_separator .
+        'Weekly mean for hour i' . $columns_separator .
+        'r(t,i) = ln P(t,i) - ln P(t,i-1)' . $columns_separator .
+        'Delta k(t,i)' . $columns_separator .
+        'Jump' . $rows_separator;//last element, move to new row
+
     return $row;
 }
 
 function combine_single_day_string($day, $numbers_array) {
     global $columns_separator;
     global $rows_separator;
-    $row = $day;
-    $row .= $columns_separator;
+    $row = '';
     foreach ($numbers_array as $certain_index) {
-        foreach ($certain_index as $value_for_hour) {
-            $row .= $value_for_hour;
-            $row .= $columns_separator;
+        foreach ($certain_index as $hour => $value_for_hour) {
+            $peak = get_peak_dummy_variable($hour);
+            $seasonality = get_string_with_dummy_variables_for_seasonality($day);
+            $row .=
+                $day . $columns_separator .
+                $hour . $columns_separator .
+                $value_for_hour . $columns_separator .
+                $peak . $columns_separator .
+                $seasonality;
+            $row .= $rows_separator;
+            ;
         }
     }
-    $row .= $rows_separator;
+
     return $row;
 }
 
-function get_combined_final_table_of_numbers($string_of_all_days) {
-    global $needed_columns;
-    $row = get_title_row(count($needed_columns));
-    $row .= $string_of_all_days;
-    return $row;
+function get_peak_dummy_variable($hour){
+    $peak = 0;
+    if ($hour >= 8 && $hour <= 22){
+        $peak = 1;
+    }
+    return $peak;
+}
+
+//Order of variables: Weekend, Winter, Spring, Summer
+function get_string_with_dummy_variables_for_seasonality($day){
+    global $columns_separator;
+    $weekend = 0;
+    if((date('N', strtotime($day)) >= 6)){
+        $weekend = 1;
+    }
+    $winter = 0;
+    $spring = 0;
+    $summer = 0;
+    $month = date('n', strtotime($day));
+    switch ($month){
+        case 12:
+        case 1:
+        case 2:
+            $winter = 1;
+            break;
+        case 3:
+        case 4:
+        case 5:
+            $spring = 1;
+            break;
+        case 6:
+        case 7:
+        case 8:
+            $summer = 1;
+            break;
+
+    }
+    $string =
+        $weekend . $columns_separator .
+        $winter . $columns_separator .
+        $spring . $columns_separator .
+        $summer;
+    return $string;
 }
 
 function get_list_of_days_of_year($year) {
@@ -122,7 +171,6 @@ function get_list_of_days_of_year($year) {
 }
 
 function write_string_to_file($string, $file_path, $append = FALSE) {
-//    $file_path = getcwd() . '/output_data_consumers_pr_2.txt';
     if ($append) {
         file_put_contents($file_path, $string, FILE_APPEND);
     } else {
@@ -131,7 +179,7 @@ function write_string_to_file($string, $file_path, $append = FALSE) {
 }
 
 /*---------------Main program--------------*/
-$year = 2016;
+$year = 2015;
 $needed_columns = array(2);
 $current_directory = getcwd();
 $columns_separator = "\t";
@@ -144,43 +192,33 @@ $file_suppliers_path = 'output_data_suppliers_pr_';
 
 for ($i = 1; $i <= 2; $i++) {
     $file_consumers_path_full = $file_consumers_path . $i . '.txt';
-//    $file_suppliers_path_full = $file_suppliers_path . $i . '.txt';
     write_string_to_file(get_title_row(count($needed_columns)), $file_consumers_path_full, FALSE);
-//    write_string_to_file(get_title_row(count($needed_columns)), $file_suppliers_path_full, FALSE);
 
     foreach (get_list_of_days_of_year($year) as $day) {
         $url = 'https://www.atsenergo.ru/results/rsv/indexes/indexes' . $i . '/index.htm?date=' . $day . '#id42';
         $full_dom = get_full_dom_from_url($url);
         $table_for_consumers = get_consumers_table($full_dom, $i);
-//        $table_for_suppliers = get_suppliers_table($full_dom, $i);
         $numbers_for_consumers = get_needed_columns_from_table_numbers($needed_columns, $table_for_consumers);
-//        $numbers_for_suppliers = get_needed_columns_from_table_numbers($needed_columns, $table_for_suppliers);
         write_string_to_file(combine_single_day_string($day, $numbers_for_consumers), $file_consumers_path_full, TRUE);
-//    write_string_to_file(combine_single_day_string($day, $numbers_for_suppliers), $file_suppliers_path_full, TRUE);
-
-        echo $day . "</br>";
     }
 }
 
 
-//$days_test = array('01.01.2015', '01.02.2015', '01.03.2015');
+
+/*---------------Test program--------------*/
+//$days_test = array('03.01.2015', '04.01.2015', '13.03.2015', '01.06.2015');
 //for ($i = 1; $i <= 2; $i++) {
 //    $file_consumers_path_full = $file_consumers_path . $i . '.txt';
-//    $file_suppliers_path_full = $file_suppliers_path . $i . '.txt';
 //    write_string_to_file(get_title_row(count($needed_columns)), $file_consumers_path_full, FALSE);
-////write_string_to_file(get_title_row(count($needed_columns)), $file_suppliers_path_full, FALSE);
+//
 //    foreach ($days_test as $day) {
 //        $url = 'https://www.atsenergo.ru/results/rsv/indexes/indexes' . $i . '/index.htm?date=' . $day . '#id42';
 //        $full_dom = get_full_dom_from_url($url);
 //        $table_for_consumers = get_consumers_table($full_dom, $i);
-////        $table_for_suppliers = get_suppliers_table($full_dom, $i);
 //        $numbers_for_consumers = get_needed_columns_from_table_numbers($needed_columns, $table_for_consumers);
-////        $numbers_for_suppliers = get_needed_columns_from_table_numbers($needed_columns, $table_for_suppliers);
 //        write_string_to_file(combine_single_day_string($day, $numbers_for_consumers), $file_consumers_path_full, TRUE);
-////        write_string_to_file(combine_single_day_string($day, $numbers_for_suppliers), 'output_data_suppliers_pr_1.txt', TRUE);
-//        echo $day . "</br>";
 //    }
 //}
 
 
-echo 'dadaza';
+echo 'Data was fetched successfully!';
