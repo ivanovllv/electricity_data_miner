@@ -73,12 +73,10 @@ function get_title_row($number_of_needed_columns) {
         'Winter' . $columns_separator .
         'Spring' . $columns_separator .
         'Summer' . $columns_separator .
-        'Standard deviation for hour i, yearly' . $columns_separator .
         'Standard deviation for hour i, weekly' . $columns_separator .
-        'Yearly mean' . $columns_separator .
-        'Yearly mean for hour i' . $columns_separator .
         'Weekly mean for hour i' . $columns_separator .
         'r(t,i) = ln P(t,i) - ln P(t,i-1)' . $columns_separator .
+        'Adjusted ^r(t,i)' . $columns_separator .
         'Delta k(t,i)' . $columns_separator .
         'Jump' . $rows_separator;//last element, move to new row
 
