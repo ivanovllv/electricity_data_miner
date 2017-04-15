@@ -62,7 +62,7 @@ function get_hourly_prices_array($content_array) {
 }
 
 /**
- * Calculates std dev from weekly mean price for hour i
+ * Calculates std dev from weekly mean returns for hour i
  */
 function get_hourly_std_deviation_for_week($prices) {
     $std_dev = $prices;
@@ -275,7 +275,7 @@ function combine_full_strings_array($content_array, $std_deviations,
     $full_strings = array();
     for ($i = 0; $i < count($content_array); $i++) {
         $full_strings[$i] =
-            substr($content_array[$i], 0, -2) . $columns_separator .
+            substr($content_array[$i], 0, -1) . $columns_separator .
             $std_deviations[$i] . $columns_separator .
             $weekly_mean_for_hour[$i] . $columns_separator .
             $price_returns[$i] . $columns_separator .
