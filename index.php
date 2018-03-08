@@ -75,7 +75,7 @@ function get_title_row($number_of_needed_columns) {
         'Summer' . $columns_separator .
         'Standard deviation for hour i, weekly' . $columns_separator .
         'Weekly mean for hour i' . $columns_separator .
-        'r(t,i) = ln P(t,i) - ln P(t,i-1)' . $columns_separator .
+        'r(t,i) = P(t,i) - P(t,i-1)' . $columns_separator .
         'Adjusted ^r(t,i)' . $columns_separator .
         'Delta k(t,i)' . $columns_separator .
         'Jump' . $rows_separator;//last element, move to new row
@@ -177,7 +177,7 @@ function write_string_to_file($string, $file_path, $append = FALSE) {
 }
 
 /*---------------Main program--------------*/
-$year = 2015;
+$year = 2017;
 $needed_columns = array(2);
 $current_directory = getcwd();
 $columns_separator = "\t";
@@ -200,23 +200,5 @@ for ($i = 1; $i <= 2; $i++) {
         write_string_to_file(combine_single_day_string($day, $numbers_for_consumers), $file_consumers_path_full, TRUE);
     }
 }
-
-
-
-/*---------------Test program--------------*/
-//$days_test = array('03.01.2015', '04.01.2015', '13.03.2015', '01.06.2015');
-//for ($i = 1; $i <= 2; $i++) {
-//    $file_consumers_path_full = $file_consumers_path . $i . '.txt';
-//    write_string_to_file(get_title_row(count($needed_columns)), $file_consumers_path_full, FALSE);
-//
-//    foreach ($days_test as $day) {
-//        $url = 'https://www.atsenergo.ru/results/rsv/indexes/indexes' . $i . '/index.htm?date=' . $day . '#id42';
-//        $full_dom = get_full_dom_from_url($url);
-//        $table_for_consumers = get_consumers_table($full_dom, $i);
-//        $numbers_for_consumers = get_needed_columns_from_table_numbers($needed_columns, $table_for_consumers);
-//        write_string_to_file(combine_single_day_string($day, $numbers_for_consumers), $file_consumers_path_full, TRUE);
-//    }
-//}
-
 
 echo 'Data was fetched successfully!';
